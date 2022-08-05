@@ -21,7 +21,7 @@ ctd_meta_sheet <- read_sheet("1xvViXZYCIWo0WZrIbIcWS0ig7yyuUiEcBVgsOTS_Yq8", she
 ctd_event <- ctd_meta_sheet |> 
   mutate(cruise_name = "GoA2020",
          vessel_name_abbr = "Pacific Legacy",
-         station = Station,
+         station = as.character(Station),
          event_type = "CTD",
          station_event_ID = paste(cruise_name, vessel_name_abbr, station,
                                   event_type, Cast, sep = "-"),
@@ -37,13 +37,13 @@ ctd_event <- ctd_meta_sheet |>
                                             ), 
                                       tz = "America/Vancouver"),
                               tzone = "UTC")),
-         sampling_duration = as_hms(time_end - time_start),
+         sampling_duration_minutes = as.numeric((time_end - time_start)/60) ,
          time_zone = "UTC",
-         minimum_sampling_depth = 0,
-         maximum_sampling_depth = `Sample depth_m`,
-         latitude_start = Latitude,
-         longitude_start = Longitude,
-         bottom_depth = Depth_m,
+         minimum_sampling_depth_meters = 0,
+         maximum_sampling_depth_meters = `Sample depth_m`,
+         latitude_start_decdeg = Latitude,
+         longitude_start_decdeg = Longitude,
+         bottom_depth_meters = Depth_m,
          comments = Notes
          ) |> 
   select(cruise_name:comments)
