@@ -1,0 +1,81 @@
+---
+title: "standardize 2020 ctd data"
+author: "Brett Johnson"
+date: "2022-08-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(googlesheets4)
+library(lubridate)
+library(hms)
+```
+
+```{r}
+ctd_meta_sheet <- read_sheet("1xvViXZYCIWo0WZrIbIcWS0ig7yyuUiEcBVgsOTS_Yq8", sheet = "CTD metadata") 
+
+1
+
+ctd_event <- ctd_meta_sheet |> 
+  mutate(cruise_name = "GoA2020",
+         vessel_name_abbr = "Pacific Legacy",
+         station = Station,
+         event_type = "CTD",
+         station_event_ID = paste(cruise_name, vessel_name_abbr, station,
+                                  event_type, Cast, sep = "-"),
+         event_date = with_tz(ymd_hms(paste(Date, substr(Time_surface,12,19)
+                                            ), 
+                                      tz = "America/Vancouver"),
+                              tzone = "UTC"),
+         year = year(event_date),
+         month = month(event_date),
+         day = day(event_date),
+         time_start = hms::as_hms(event_date),
+         time_end = as_hms(with_tz(ymd_hms(paste(Date, substr(Time_off,12,19)
+                                            ), 
+                                      tz = "America/Vancouver"),
+                              tzone = "UTC")),
+         sampling_duration = as_hms(time_end - time_start),
+         time_zone = "UTC",
+         minimum_sampling_depth = 0,
+         maximum_sampling_depth = `Sample depth_m`,
+         latitude_start = Latitude,
+         longitude_start = Longitude,
+         bottom_depth = Depth_m,
+         comments = Notes
+         ) |> 
+  select(cruise_name:comments)
+
+write_csv(ctd_event, here::here("standardized_data", "ctd_events.csv"))
+         
+#TODO confirm that 2019 CTD event date tz conversion worked as expected, also confirm that time start and time end are UTC times
+orig_ctd <- read_csv(here::here("original_data", "IYS 2020 CTD - Processed 20200415.csv"))
+
+ctd <- orig_ctd |> 
+  mutate(station_event_ID = paste("GoA2020", "Pacific Legacy", Station, "CTD", sep = "-"),
+         cast = if_else(station_event_ID %in% 
+                          c("GoA2020-Pacific Legacy-4-CTD",
+                            "GoA2020-Pacific Legacy-P-CTD", 
+                            "GoA2020-Pacific Legacy-3-CTD"), 2, 1),
+         station_event_ID = paste(station_event_ID, cast, sep = "-"),
+         instrument_type = "CTD",
+         instrument_model = "SBE19Plus",
+         sampling_depth_dbar = Pressure,
+         sampling_depth_m = Depth,
+         sea_water_temperature_degC = Temperature,
+         sea_water_salinity_psu = Salinity,
+         `sea_water_conductivity_mS/cm` = Conductivity,
+         `sea_water_density_kg/m3` = Density,
+         `sea_water_fluorescence_mg/m3` = Fluorescence,
+         `sea_water_oxygen_mL/L` = `Oxygen_mL/L`, 
+         ) |> 
+  select(station_event_ID:`sea_water_oxygen_mL/L`)
+
+write_csv(ctd, here::here("standardized_data", "2020_ctd.csv"))
+
+combined_event_ctd <- right_join(ctd_event, ctd, by = 'station_event_ID')
+write_csv(combined_event_ctd, here::here("standardized_data", "combined_event_ctd.csv"))
+```
+
