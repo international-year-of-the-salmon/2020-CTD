@@ -1,4 +1,4 @@
-station_event_ID,cast,instrument_type,instrument_model,sampling_depth_dbar,sampling_depth_m,sea_water_temperature_degC,sea_water_salinity_psu,sea_water_conductivity_mS/cm,sea_water_density_kg/m3,sea_water_fluorescence_mg/m3,sea_water_oxygen_mL/L
+station_event_ID,cast,instrument_type,instrument_model,sampling_depth_dbar,sampling_depth_meters,sea_water_temperature_degC,sea_water_salinity_PSU,sea_water_conductivity_mS/cm,sea_water_density_kg/m3,sea_water_fluorescence_mg/m3,sea_water_oxygen_mL/L
 GoA2020-Pacific Legacy-1-CTD-1,1,CTD,SBE19Plus,1,0.991,8.2672,30.3525,32.046316,23.5896,1.3204,5.9456
 GoA2020-Pacific Legacy-1-CTD-1,1,CTD,SBE19Plus,2,1.983,8.3333,32.2794,33.960946,25.0891,1.4001,5.8157
 GoA2020-Pacific Legacy-1-CTD-1,1,CTD,SBE19Plus,3,2.974,8.3484,32.216,33.912122,25.0374,1.4115,6.3045
