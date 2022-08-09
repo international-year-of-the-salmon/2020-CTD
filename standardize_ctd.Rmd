@@ -69,7 +69,8 @@ ctd <- orig_ctd |>
          sea_water_temperature_degC = Temperature,
          sea_water_salinity_PSU = Salinity,
          `sea_water_conductivity_mS/cm` = Conductivity,
-         `sea_water_density_kg/m3` = Density,
+         `sea_water_density_kg/m3` = 1000 + Density,
+         sea_water_sigmaT = Density,
          `sea_water_fluorescence_mg/m3` = Fluorescence,
          `sea_water_oxygen_mL/L` = `Oxygen_mL/L`, 
          ) |> 
