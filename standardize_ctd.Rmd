@@ -20,7 +20,7 @@ ctd_meta_sheet <- read_sheet("1xvViXZYCIWo0WZrIbIcWS0ig7yyuUiEcBVgsOTS_Yq8", she
 
 ctd_event <- ctd_meta_sheet |> 
   mutate(cruise_name = "GoA2020",
-         vessel_name_abbr = "Pacific Legacy",
+         vessel_name_abbr = "Legacy",
          station = as.character(Station),
          event_type = "CTD",
          station_event_ID = paste(cruise_name, vessel_name_abbr, station,
@@ -56,18 +56,18 @@ write_csv(ctd_event, here::here("standardized_data", "ctd_events.csv"))
 orig_ctd <- read_csv(here::here("original_data", "IYS 2020 CTD - Processed 20200415.csv"))
 
 ctd <- orig_ctd |> 
-  mutate(station_event_ID = paste("GoA2020", "Pacific Legacy", Station, "CTD", sep = "-"),
+  mutate(station_event_ID = paste("GoA2020", "Legacy", Station, "CTD", sep = "-"),
          cast = if_else(station_event_ID %in% 
-                          c("GoA2020-Pacific Legacy-4-CTD",
-                            "GoA2020-Pacific Legacy-P-CTD", 
-                            "GoA2020-Pacific Legacy-3-CTD"), 2, 1),
+                          c("GoA2020-Legacy-4-CTD",
+                            "GoA2020-Legacy-P-CTD", 
+                            "GoA2020-Legacy-3-CTD"), 2, 1),
          station_event_ID = paste(station_event_ID, cast, sep = "-"),
          instrument_type = "CTD",
          instrument_model = "SBE19Plus",
          sampling_depth_dbar = Pressure,
          sampling_depth_meters = Depth,
          sea_water_temperature_degC = Temperature,
-         sea_water_salinity_psu = Salinity,
+         sea_water_salinity_PSU = Salinity,
          `sea_water_conductivity_mS/cm` = Conductivity,
          `sea_water_density_kg/m3` = Density,
          `sea_water_fluorescence_mg/m3` = Fluorescence,
