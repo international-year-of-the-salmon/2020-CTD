@@ -14,15 +14,31 @@ library(hms)
 ```
 
 ```{r}
+# Read from Natalie's google spreadsheet in IYS-OOS shared drive
 ctd_meta_sheet <- read_sheet("1xvViXZYCIWo0WZrIbIcWS0ig7yyuUiEcBVgsOTS_Yq8", sheet = "CTD metadata") 
 
 1
 
+cross_walk <- googlesheets4::read_sheet(ss = '1etM9o4ZKfNHDdDRPeAvsMK5j6NNPqrgHGDsdbC3m3Is', sheet = 'UBC Trawl sample data_dec2020')
+
+cross_w <- cross_walk |> 
+  select(Station, Set) |> 
+  distinct() |> 
+  mutate(Station = as.character(Station)) |> 
+  filter(Station != "NA")
+
+
 ctd_event <- ctd_meta_sheet |> 
+  mutate(Station = if_else(Station == "P PRIME", "PPRIME", 
+                           as.character(Station))) |> 
+  full_join(cross_w, by = "Station") |> 
+  mutate(Set = if_else(Station == "AJ", 35, if_else(Station == "AW", 45, Set))) |>
+  drop_na(Cruise) |> # Removes trawl sets without a CTD cast
+  rename(alternate_station_id = Station,
+         Station = Set) |> 
   mutate(cruise_name = "GoA2020",
          vessel_name_abbr = "Legacy",
-         station = as.character(Station),
-         station = ifelse(station == "P PRIME", "p_prime", station),
+         station = Station,
          event_type = "CTD",
          station_event_ID = paste(cruise_name, vessel_name_abbr, station,
                                   event_type, Cast, sep = "-"),
@@ -49,20 +65,38 @@ ctd_event <- ctd_meta_sheet |>
          bottom_depth_meters = Depth_m,
          comments = Notes
          ) |> 
-  select(cruise_name:comments)
+  select(cruise_name:station, alternate_station_id, event_type:comments)
 
 #TODO: confirm density is sigma T and not potential density
 
+
 write_csv(ctd_event, here::here("standardized_data", "ctd_events.csv"))
          
-orig_ctd <- read_csv(here::here("original_data", "IYS 2020 CTD - Processed 20200415.csv"))
+orig_ctd <- read_csv(here::here("original_data", "IYS 2020 CTD - Processed 20200415.csv")) |> 
+   mutate(Station = if_else(Station == "P PRIME", "PPRIME", 
+                           as.character(Station))) |> 
+  full_join(cross_w, by = "Station") |> 
+  mutate(Set = if_else(Station == "AJ", 35, if_else(Station == "AW", 45, Set))) |>
+  drop_na(Cruise) |> # Removes trawl sets without a CTD cast
+  rename(alternate_station_id = Station,
+         Station = Set)
 
+#TODO Correct cast numbers for duplicate tows
 ctd <- orig_ctd |> 
   mutate(station_event_ID = paste("GoA2020", "Legacy", Station, "CTD", sep = "-"),
-         cast = if_else(station_event_ID %in% 
-                          c("GoA2020-Legacy-4-CTD",
-                            "GoA2020-Legacy-P-CTD", 
-                            "GoA2020-Legacy-3-CTD"), 2, 1),
+         cast = 1,
+         cast = if_else(station_event_ID == "GoA2020-Legacy-3-CTD" & 
+                          Date == "2020-04-03", 2, cast),
+         cast = if_else(station_event_ID == "GoA2020-Legacy-4-CTD" & 
+                          Date == "2020-04-02", 2, cast),
+         cast = if_else(station_event_ID == "GoA2020-Legacy-5-CTD" & 
+                          Date == "2020-04-02", 2, cast),
+         cast = if_else(station_event_ID == "GoA2020-Legacy-25-CTD" &
+                          Date == "2020-03-26", 2, cast),
+         cast = if_else(station_event_ID == "GoA2020-Legacy-27-CTD" &
+                          Date == "2020-03-26", 2, cast),
+         cast = if_else(station_event_ID == "GoA2020-Legacy-41-CTD" &
+                          Date == "2020-04-02", 2, cast),
          station_event_ID = paste(station_event_ID, cast, sep = "-"),
          instrument_type = "CTD",
          instrument_model = "SBE19Plus",
@@ -80,7 +114,11 @@ ctd <- orig_ctd |>
 
 write_csv(ctd, here::here("standardized_data", "2020_ctd.csv"))
 
+#QC both anti joins should produce 0 rows
+anti_join(ctd, ctd_event, by = "station_event_ID")
+anti_join(ctd_event, ctd, by = "station_event_ID")
 combined_event_ctd <- right_join(ctd_event, ctd, by = 'station_event_ID')
+
 write_csv(combined_event_ctd, here::here("standardized_data", "combined_event_ctd.csv"))
 ```
 
